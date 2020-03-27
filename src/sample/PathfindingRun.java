@@ -17,6 +17,7 @@ public class PathfindingRun implements Runnable {
         if(isRunning) {
             List<List<Integer>> path;
             switch(visualizer.getAlgorithmVariation()) {
+                case DIJKSTRA: path = Algorithm.dijsktra(this, visualizer); break;
                 case DFS: path = Algorithm.depthFirstSearch(this, visualizer, new ArrayList<List<Integer>>(), visualizer.getStart()); break;
                 default: path = Algorithm.breadthFirstSearch(this, visualizer);
             }

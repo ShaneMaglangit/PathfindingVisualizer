@@ -38,6 +38,7 @@ public class Visualizer extends VBox {
         // Add the items to the cbx
         btnVisualize.setOnMouseClicked((event) -> controller.visualize(this, pathfindingRun));
         cbxAlgo.setItems(FXCollections.observableArrayList(
+                Algorithm.Variation.DIJKSTRA.getStringEquiv(),
                 Algorithm.Variation.BFS.getStringEquiv(),
                 Algorithm.Variation.DFS.getStringEquiv()
         ));
@@ -110,6 +111,8 @@ public class Visualizer extends VBox {
 
         if(selectedValue == Algorithm.Variation.DFS.getStringEquiv()) {
             return Algorithm.Variation.DFS;
+        } else if(selectedValue == Algorithm.Variation.DIJKSTRA.getStringEquiv()) {
+            return Algorithm.Variation.DIJKSTRA;
         } else {
             return  Algorithm.Variation.BFS;
         }

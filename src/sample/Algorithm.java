@@ -7,7 +7,8 @@ import java.util.List;
 
 public final class Algorithm {
     public enum Variation {
-        BFS("Breath-first search"), DFS("Depth-first search");
+        BFS("Breath-first search"), DFS("Depth-first search"),
+        DIJKSTRA("Dijkstra");
 
         private String stringEquiv;
 
@@ -18,6 +19,87 @@ public final class Algorithm {
         public String getStringEquiv() {
             return this.stringEquiv;
         }
+    }
+
+    // Simplified dijsktra for unweighted paths (this is not proper dijsktra)
+    public static LinkedList<List<Integer>> dijsktra(PathfindingRun pathfindingRun, Visualizer visualizer) {
+        List<List<Integer>> visited = new ArrayList<>();
+        int[][] distance = new int[visualizer.ROW_COUNT][visualizer.COL_COUNT];
+        int[] rowDir = {-1, 0, 1, 0};
+        int[] colDir = {0, 1, 0, -1};
+        LinkedList<List<Integer>> queue = new LinkedList<>();
+
+        queue.add(visualizer.getStart());
+
+        while(!queue.isEmpty() && pathfindingRun.isRunning()) {
+            List<Integer> current = queue.poll();
+            visited.add(current);
+
+            for(int i = 0; i < 4; i++) {
+                int nextRow = current.get(0) + rowDir[i];
+                int nextCol = current.get(1) + colDir[i];
+
+                // If exceeds then skip
+                if (nextRow < 0 || nextRow >= visualizer.ROW_COUNT) continue;
+                if (nextCol < 0 || nextCol >= visualizer.COL_COUNT) continue;
+
+                // If visited or already on queue
+                if (visualizer.getNodes()[nextRow][nextCol].getState() == NodeState.BLOCKED) continue;
+                if (visited.contains(List.of(nextRow, nextCol))) continue;
+                if (queue.contains(List.of(nextRow, nextCol))) continue;
+
+                // Add weight / distance
+                int minWeight = distance[nextRow][nextCol];
+                int newWeight = distance[current.get(0)][current.get(1)] + 1;
+                if(minWeight == 0 || newWeight < minWeight) {
+                    distance[nextRow][nextCol] = newWeight;
+                }
+
+                if(List.of(nextRow, nextCol).equals(visualizer.getEnd())) {
+                    return traceShortestPath(visualizer, distance);
+                }
+
+                visualizer.getNodes()[nextRow][nextCol].changeState(NodeState.VISITED);
+                queue.add(List.of(nextRow, nextCol));
+                pathfindingRun.sleep(8L);
+            }
+        }
+
+        return null;
+    }
+
+    private static LinkedList<List<Integer>> traceShortestPath(Visualizer visualizer, int[][] distance) {
+        LinkedList<List<Integer>> path = new LinkedList<>();
+        int[] rowDir = {-1, 0, 1, 0};
+        int[] colDir = {0, 1, 0, -1};
+
+        List<Integer> current = visualizer.getEnd();
+        List<Integer> closest = visualizer.getEnd();
+        int closestDistance = distance[closest.get(0)][closest.get(1)];
+
+        while(closestDistance > 1) {
+            for(int i = 0; i < 4; i++) {
+                int nextDistance;
+                int nextRow = current.get(0) + rowDir[i];
+                int nextCol = current.get(1) + colDir[i];
+
+                if (nextRow < 0 || nextRow >= visualizer.ROW_COUNT) continue;
+                if (nextCol < 0 || nextCol >= visualizer.COL_COUNT) continue;
+
+                nextDistance = distance[nextRow][nextCol];
+
+                if(nextDistance == 0) continue;
+                if(nextDistance < closestDistance) {
+                    closestDistance = nextDistance;
+                    closest = List.of(nextRow, nextCol);
+                }
+            }
+            current = closest;
+            path.add(current);
+        }
+
+        Collections.reverse(path);
+        return path;
     }
 
     public static LinkedList<List<Integer>> depthFirstSearch(PathfindingRun pathfindingRun, Visualizer visualizer, List<List<Integer>> visited, List<Integer> current) {
@@ -36,6 +118,7 @@ public final class Algorithm {
             if (nextCol < 0 || nextCol >= visualizer.COL_COUNT) continue;
 
             // If visited or start then skip
+            if (visualizer.getNodes()[nextRow][nextCol].getState() == NodeState.BLOCKED) continue;
             if (nextRow == visualizer.getStart().get(0) && nextCol == visualizer.getStart().get(1)) continue;
             next = List.of(nextRow, nextCol);
             if (visited.contains(next)) continue;
@@ -89,6 +172,7 @@ public final class Algorithm {
                 if (nextCol < 0 || nextCol >= visualizer.COL_COUNT) continue;
 
                 // If visited or start then skip
+                if (visualizer.getNodes()[nextRow][nextCol].getState() == NodeState.BLOCKED) continue;
                 if (nextRow == start.get(0) && nextCol == start.get(1)) continue;
                 temp = List.of(nextRow, nextCol);
                 if (visited.contains(temp)) continue;
