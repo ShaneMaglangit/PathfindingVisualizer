@@ -1,0 +1,6 @@
+.default-border {
+    -fx-border-color: lightgray;
+    -fx-border-image-insets: 0, 1;
+    -fx-pref-height: 32;
+    -fx-pref-width: 32;
+}
