@@ -36,12 +36,16 @@ public class Visualizer extends VBox {
         this.btnVisualize = new Button("Visualize");
 
         // Add the items to the cbx
-        cbxAlgo.setItems(FXCollections.observableArrayList("Breath-First Search", "Depth-First Search"));
         btnVisualize.setOnMouseClicked((event) -> controller.visualize(this, pathfindingRun));
+        cbxAlgo.setItems(FXCollections.observableArrayList(
+                Algorithm.Variation.BFS.getStringEquiv(),
+                Algorithm.Variation.DFS.getStringEquiv()
+        ));
+        cbxAlgo.getSelectionModel().selectFirst();
 
         // Set start and end nodes
-        start = List.of(0, 0);
-        end = List.of(ROW_COUNT - 1, COL_COUNT - 1);
+        start = List.of((ROW_COUNT - 1) / 2, COL_COUNT / 3 / 2);
+        end = List.of((ROW_COUNT - 1) / 2, COL_COUNT - (COL_COUNT / 3 / 2));
 
         // Create the nodes
         createNodes();
@@ -59,12 +63,14 @@ public class Visualizer extends VBox {
 
     public void createNodes() {
         matrix.getChildren().clear();
-        for(int row = 0; row < ROW_COUNT; row++) {
-            for(int col = 0; col < COL_COUNT; col++) {
+        for (int row = 0; row < ROW_COUNT; row++) {
+            for (int col = 0; col < COL_COUNT; col++) {
                 int finalRow = row;
                 int finalCol = col;
                 Node temp = new Node();
-                temp.setOnMouseClicked((event) -> { controller.setStartNode(this, List.of(finalRow, finalCol)); });
+                temp.setOnMouseClicked((event) -> {
+                    controller.setStartNode(this, List.of(finalRow, finalCol));
+                });
                 nodes[row][col] = temp;
                 matrix.add(temp, col, row);
             }
@@ -97,5 +103,15 @@ public class Visualizer extends VBox {
 
     public PathfindingRun getPathfindingRun() {
         return pathfindingRun;
+    }
+
+    public Algorithm.Variation getAlgorithmVariation() {
+        String selectedValue = String.valueOf(cbxAlgo.getValue());
+
+        if(selectedValue == Algorithm.Variation.DFS.getStringEquiv()) {
+            return Algorithm.Variation.DFS;
+        } else {
+            return  Algorithm.Variation.BFS;
+        }
     }
 }

@@ -4,7 +4,7 @@ import java.util.List;
 
 public class Controller {
     public void setStartNode(Visualizer visualizer, List<Integer> next) {
-        if(!visualizer.getPathfindingRun().isRunning()) {
+        if(!visualizer.getPathfindingRun().isRunning() && !visualizer.getEnd().equals(next)) {
             Node[][] nodes = visualizer.getNodes();
             List<Integer> start = visualizer.getStart();
 
