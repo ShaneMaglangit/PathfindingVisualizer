@@ -9,7 +9,7 @@ public class Controller {
             List<Integer> start = visualizer.getStart();
 
             nodes[start.get(0)][start.get(1)].changeState(NodeState.DEFAULT);
-            nodes[next.get(0)][next.get(1)].changeState(NodeState.BLOCKED);
+            nodes[next.get(0)][next.get(1)].changeState(NodeState.START);
 
             visualizer.setStart(next);
         }
@@ -19,9 +19,9 @@ public class Controller {
         if(pathfindingRun.isRunning()) {
             pathfindingRun.setRunning(false);
             visualizer.createNodes();
-        } else {
-            pathfindingRun.setRunning(true);
-            new Thread(pathfindingRun).start();
         }
+
+        pathfindingRun.setRunning(true);
+        new Thread(pathfindingRun).start();
     }
 }

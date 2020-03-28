@@ -9,8 +9,10 @@ import javafx.scene.paint.Paint;
 
 public class Node extends Pane {
     private NodeState state;
+    private int weight;
 
     public Node() {
+        this.weight = 1;
         getStyleClass().add("default-border");
         changeState(NodeState.DEFAULT);
     }
@@ -35,6 +37,14 @@ public class Node extends Pane {
         backgroundFill = new BackgroundFill(paint, CornerRadii.EMPTY, Insets.EMPTY);
         background = new Background(backgroundFill);
         setBackground(background);
+    }
+
+    public void addWeight(int weight) {
+        this.weight += weight;
+    }
+
+    public int getWeight() {
+        return weight;
     }
 
     public NodeState getState() {

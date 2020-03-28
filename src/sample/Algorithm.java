@@ -1,14 +1,11 @@
 package sample;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public final class Algorithm {
     public enum Variation {
         BFS("Breath-first search"), DFS("Depth-first search"),
-        DIJKSTRA("Dijkstra");
+        DIJKSTRA("Dijkstra"), ASTAR("A-Star Search (A*)");
 
         private String stringEquiv;
 
@@ -19,87 +16,6 @@ public final class Algorithm {
         public String getStringEquiv() {
             return this.stringEquiv;
         }
-    }
-
-    // Simplified dijsktra for unweighted paths (this is not proper dijsktra)
-    public static LinkedList<List<Integer>> dijsktra(PathfindingRun pathfindingRun, Visualizer visualizer) {
-        List<List<Integer>> visited = new ArrayList<>();
-        int[][] distance = new int[visualizer.ROW_COUNT][visualizer.COL_COUNT];
-        int[] rowDir = {-1, 0, 1, 0};
-        int[] colDir = {0, 1, 0, -1};
-        LinkedList<List<Integer>> queue = new LinkedList<>();
-
-        queue.add(visualizer.getStart());
-
-        while(!queue.isEmpty() && pathfindingRun.isRunning()) {
-            List<Integer> current = queue.poll();
-            visited.add(current);
-
-            for(int i = 0; i < 4; i++) {
-                int nextRow = current.get(0) + rowDir[i];
-                int nextCol = current.get(1) + colDir[i];
-
-                // If exceeds then skip
-                if (nextRow < 0 || nextRow >= visualizer.ROW_COUNT) continue;
-                if (nextCol < 0 || nextCol >= visualizer.COL_COUNT) continue;
-
-                // If visited or already on queue
-                if (visualizer.getNodes()[nextRow][nextCol].getState() == NodeState.BLOCKED) continue;
-                if (visited.contains(List.of(nextRow, nextCol))) continue;
-                if (queue.contains(List.of(nextRow, nextCol))) continue;
-
-                // Add weight / distance
-                int minWeight = distance[nextRow][nextCol];
-                int newWeight = distance[current.get(0)][current.get(1)] + 1;
-                if(minWeight == 0 || newWeight < minWeight) {
-                    distance[nextRow][nextCol] = newWeight;
-                }
-
-                if(List.of(nextRow, nextCol).equals(visualizer.getEnd())) {
-                    return traceShortestPath(visualizer, distance);
-                }
-
-                visualizer.getNodes()[nextRow][nextCol].changeState(NodeState.VISITED);
-                queue.add(List.of(nextRow, nextCol));
-                pathfindingRun.sleep(8L);
-            }
-        }
-
-        return null;
-    }
-
-    private static LinkedList<List<Integer>> traceShortestPath(Visualizer visualizer, int[][] distance) {
-        LinkedList<List<Integer>> path = new LinkedList<>();
-        int[] rowDir = {-1, 0, 1, 0};
-        int[] colDir = {0, 1, 0, -1};
-
-        List<Integer> current = visualizer.getEnd();
-        List<Integer> closest = visualizer.getEnd();
-        int closestDistance = distance[closest.get(0)][closest.get(1)];
-
-        while(closestDistance > 1) {
-            for(int i = 0; i < 4; i++) {
-                int nextDistance;
-                int nextRow = current.get(0) + rowDir[i];
-                int nextCol = current.get(1) + colDir[i];
-
-                if (nextRow < 0 || nextRow >= visualizer.ROW_COUNT) continue;
-                if (nextCol < 0 || nextCol >= visualizer.COL_COUNT) continue;
-
-                nextDistance = distance[nextRow][nextCol];
-
-                if(nextDistance == 0) continue;
-                if(nextDistance < closestDistance) {
-                    closestDistance = nextDistance;
-                    closest = List.of(nextRow, nextCol);
-                }
-            }
-            current = closest;
-            path.add(current);
-        }
-
-        Collections.reverse(path);
-        return path;
     }
 
     public static LinkedList<List<Integer>> depthFirstSearch(PathfindingRun pathfindingRun, Visualizer visualizer, List<List<Integer>> visited, List<Integer> current) {
@@ -183,7 +99,7 @@ public final class Algorithm {
 
                 // If end node is found, trace and return path.
                 if (temp.equals(visualizer.getEnd())) {
-                    return traceBFSPath(visited, prev, start, end);
+                    return tracePath(visited, prev, start, end);
                 }
 
                 visualizer.getNodes()[temp.get(0)][temp.get(1)].changeState(NodeState.VISITED);
@@ -195,7 +111,112 @@ public final class Algorithm {
         return new ArrayList<>();
     }
 
-    private static List<List<Integer>> traceBFSPath(List<List<Integer>> visited, List<List<Integer>> prev, List<Integer> start, List<Integer> end) {
+    public static List<List<Integer>> dijkstra(PathfindingRun pathfindingRun, Visualizer visualizer) {
+        PriorityQueue<List<Object>> heap = new PriorityQueue<>(new DistanceComparator());
+        List<List<Integer>> visited = new ArrayList<>();
+        List<List<Integer>> prev = new ArrayList<>();
+
+        heap.add(List.of(0, visualizer.getStart(), new ArrayList<>()));
+
+        while(!heap.isEmpty() && pathfindingRun.isRunning()) {
+            List<Integer> current = (List<Integer>) heap.peek().get(1);
+            List<Integer> tempPrev = (List<Integer>) heap.peek().get(2);
+            int distance = (int) heap.poll().get(0);
+
+            if(!visited.contains(current)) {
+                Node currentNode = visualizer.getNodes()[current.get(0)][current.get(1)];
+                List<List<Integer>> neighbors;
+                visited.add(current);
+                prev.add(tempPrev);
+
+                if(List.of(current.get(0), current.get(1)).equals(visualizer.getEnd())) {
+                    return tracePath(visited, prev, visualizer.getStart(), visualizer.getEnd());
+                }
+
+                if(!currentNode.getState().equals(NodeState.START)) currentNode.changeState(NodeState.VISITED);
+                pathfindingRun.sleep(8L);
+
+                neighbors = neighbors(current, visualizer.ROW_COUNT, visualizer.COL_COUNT);
+                for(List<Integer> neighbor : neighbors) {
+                    if(visited.contains(neighbor)) continue;
+                    Node node = visualizer.getNodes()[neighbor.get(0)][neighbor.get(1)];
+                    if(node.getState().equals(NodeState.BLOCKED)) continue;
+                    int nextDistance = distance + node.getWeight();
+                    heap.add(List.of(nextDistance, neighbor, current));
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public static List<List<Integer>> aStar(PathfindingRun pathfindingRun, Visualizer visualizer) {
+        PriorityQueue<List<Object>> heap = new PriorityQueue<>(new CostComparator());
+        List<List<Integer>> visited = new ArrayList<>();
+        List<List<Integer>> prev = new ArrayList<>();
+
+        int gCost = 0;
+        int hCost = getHeuristicDistance(visualizer.getStart(), visualizer.getEnd());
+        int fCost = hCost + 0;
+        heap.add(List.of(gCost, hCost, fCost, visualizer.getStart(), new ArrayList<>()));
+
+        while(!heap.isEmpty() && pathfindingRun.isRunning()) {
+            List<Integer> current = (List<Integer>) heap.peek().get(3);
+            List<Integer> tempPrev = (List<Integer>) heap.peek().get(4);
+            int distance = (int) heap.poll().get(0);
+
+            if(!visited.contains(current)) {
+                Node currentNode = visualizer.getNodes()[current.get(0)][current.get(1)];
+                List<List<Integer>> neighbors;
+                visited.add(current);
+                prev.add(tempPrev);
+
+                if(List.of(current.get(0), current.get(1)).equals(visualizer.getEnd())) {
+                    return tracePath(visited, prev, visualizer.getStart(), visualizer.getEnd());
+                }
+
+                if(!currentNode.getState().equals(NodeState.START)) currentNode.changeState(NodeState.VISITED);
+                pathfindingRun.sleep(8L);
+
+                neighbors = neighbors(current, visualizer.ROW_COUNT, visualizer.COL_COUNT);
+                for(List<Integer> neighbor : neighbors) {
+                    if(visited.contains(neighbor)) continue;
+                    Node node = visualizer.getNodes()[neighbor.get(0)][neighbor.get(1)];
+                    if(node.getState().equals(NodeState.BLOCKED)) continue;
+                    gCost = distance + node.getWeight();
+                    hCost = getHeuristicDistance(neighbor, visualizer.getEnd());
+                    fCost = hCost + gCost;
+                    heap.add(List.of(gCost, hCost, fCost, neighbor, current));
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public static int getHeuristicDistance(List<Integer> a, List<Integer> b) {
+        return ((int) Math.sqrt(Math.pow(b.get(0) - a.get(0), 2) + Math.pow(b.get(1) - a.get(1), 2))) * 10;
+    }
+
+    public static List<List<Integer>> neighbors(List<Integer> origin, int maxRow, int maxCol) {
+        List<List<Integer>> neighbors = new ArrayList<>();
+        int[] rowDir = {1, 0, -1, 0};
+        int[] colDir = {0, -1, 0, 1};
+
+        for(int i = 0; i < 4; i++) {
+            int nextRow = origin.get(0) + rowDir[i];
+            int nextCol = origin.get(1) + colDir[i];
+
+            if(nextRow < 0 || nextRow >= maxRow) continue;
+            if(nextCol < 0 || nextCol >= maxCol) continue;
+
+            neighbors.add(List.of(nextRow, nextCol));
+        }
+
+        return neighbors;
+    }
+
+    private static List<List<Integer>> tracePath(List<List<Integer>> visited, List<List<Integer>> prev, List<Integer> start, List<Integer> end) {
         List<List<Integer>> path = new ArrayList<>();
         List<Integer> trackedNode = prev.get(visited.indexOf(end));
 
