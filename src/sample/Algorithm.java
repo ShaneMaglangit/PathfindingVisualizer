@@ -189,13 +189,13 @@ public final class Algorithm {
     }
 
     public static int getHeuristicDistance(List<Integer> a, List<Integer> b) {
-        return ((int) Math.sqrt(Math.pow(b.get(0) - a.get(0), 2) + Math.pow(b.get(1) - a.get(1), 2))) * 4;
+        return ((int) Math.sqrt(Math.pow(b.get(0) - a.get(0), 2) + Math.pow(b.get(1) - a.get(1), 2))) * 2;
     }
 
     public static List<List<Integer>> neighbors(List<Integer> origin, int maxRow, int maxCol) {
         List<List<Integer>> neighbors = new ArrayList<>();
-        int[] rowDir = {0, 0, 1, -1};
-        int[] colDir = {1, -1, 0, 0};
+        int[] rowDir = {1, 0, -1, 0};
+        int[] colDir = {0, 1, 0, -1};
 
         for(int i = 0; i < 4; i++) {
             int nextRow = origin.get(0) + rowDir[i];

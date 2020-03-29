@@ -34,13 +34,25 @@ public class Controller {
         }
     }
 
+    public void addWeight(Visualizer visualizer, List<Integer> next) {
+        Node node = visualizer.getNodes()[next.get(0)][next.get(1)];
+        if(!visualizer.getPathfindingRun().isRunning() && node.getState().equals(NodeState.DEFAULT)) {
+            node.addWeight(1);
+        }
+    }
+
     public void visualize(Visualizer visualizer, PathfindingRun pathfindingRun) {
         if(pathfindingRun.isRunning()) {
             pathfindingRun.setRunning(false);
-            visualizer.createNodes();
+            visualizer.resetNodes();
         } else {
             pathfindingRun.setRunning(true);
             new Thread(pathfindingRun).start();
         }
+    }
+
+    public void clearBoard(Visualizer visualizer, PathfindingRun pathfindingRun) {
+        pathfindingRun.setRunning(false);
+        visualizer.createNodes();
     }
 }

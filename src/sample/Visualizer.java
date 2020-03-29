@@ -25,6 +25,7 @@ public class Visualizer extends VBox {
     private GridPane matrix;
     private ComboBox cbxAlgo;
     private Button btnVisualize;
+    private Button btnClear;
 
     public Visualizer(Controller controller) {
         this.controller = controller;
@@ -37,6 +38,7 @@ public class Visualizer extends VBox {
         this.hbxMenu.setSpacing(24);
         this.cbxAlgo = new ComboBox();
         this.btnVisualize = new Button("Visualize");
+        this.btnClear = new Button("Clear board");
 
         // Add the items to the cbx
         btnVisualize.setOnMouseClicked((event) -> controller.visualize(this, pathfindingRun));
@@ -46,6 +48,7 @@ public class Visualizer extends VBox {
                 Algorithm.Variation.BFS.getStringEquiv(),
                 Algorithm.Variation.DFS.getStringEquiv()
         ));
+        btnClear.setOnMouseClicked((event) -> controller.clearBoard(this, pathfindingRun));
         cbxAlgo.getSelectionModel().selectFirst();
 
         // Set start and end nodes
@@ -59,40 +62,53 @@ public class Visualizer extends VBox {
         this.pathfindingRun = new PathfindingRun(this);
 
         // Add the child controls
-        hbxMenu.getChildren().addAll(cbxAlgo, btnVisualize);
+        hbxMenu.getChildren().addAll(cbxAlgo, btnVisualize, btnClear);
         this.getChildren().addAll(hbxMenu, matrix);
 
         // Add stylesheet
         getStylesheets().add(getClass().getResource("style.css").toExternalForm());
     }
 
+    public void resetNodes() {
+        for (int row = 0; row < ROW_COUNT; row++) {
+            for (int col = 0; col < COL_COUNT; col++) {
+                Node node = nodes[row][col];
+                if (
+                    node.getState().equals(NodeState.BLOCKED) ||
+                    List.of(row, col).equals(start) ||
+                    List.of(row, col).equals(end)
+                ) continue;
+                else node.changeState(NodeState.DEFAULT);
+            }
+        }
+    }
+
     public void createNodes() {
         for (int row = 0; row < ROW_COUNT; row++) {
             for (int col = 0; col < COL_COUNT; col++) {
-                if(nodes[row][col] != null && nodes[row][col].getState().equals(NodeState.BLOCKED)) continue;
                 int finalRow = row;
                 int finalCol = col;
                 Node temp = new Node();
 
                 temp.addEventHandler(MouseEvent.DRAG_DETECTED, (event) -> {
                     temp.startFullDrag();
-                    if(event.isPrimaryButtonDown()) {
+                    if (event.isPrimaryButtonDown()) {
                         controller.setNodeAsBlocked(this, List.of(finalRow, finalCol));
                     } else {
-                        temp.addWeight(1);
+                        controller.addWeight(this, List.of(finalRow, finalCol));
                     }
                 });
 
                 temp.addEventHandler(MouseDragEvent.MOUSE_DRAG_ENTERED, (event) -> {
-                    if(event.isPrimaryButtonDown()) {
+                    if (event.isPrimaryButtonDown()) {
                         controller.setNodeAsBlocked(this, List.of(finalRow, finalCol));
                     } else {
-                        temp.addWeight(1);
+                        controller.addWeight(this, List.of(finalRow, finalCol));
                     }
                 });
 
                 temp.setOnMouseClicked((event) -> {
-                    if(event.getButton() == MouseButton.PRIMARY) {
+                    if (event.getButton() == MouseButton.PRIMARY) {
                         controller.setStartNode(this, List.of(finalRow, finalCol));
                     } else {
                         controller.setEndNode(this, List.of(finalRow, finalCol));
@@ -112,14 +128,14 @@ public class Visualizer extends VBox {
     public Algorithm.Variation getAlgorithmVariation() {
         String selectedValue = String.valueOf(cbxAlgo.getValue());
 
-        if(selectedValue == Algorithm.Variation.DFS.getStringEquiv()) {
+        if (selectedValue == Algorithm.Variation.DFS.getStringEquiv()) {
             return Algorithm.Variation.DFS;
-        } else if(selectedValue == Algorithm.Variation.ASTAR.getStringEquiv()) {
+        } else if (selectedValue == Algorithm.Variation.ASTAR.getStringEquiv()) {
             return Algorithm.Variation.ASTAR;
-        } else if(selectedValue == Algorithm.Variation.DIJKSTRA.getStringEquiv()) {
+        } else if (selectedValue == Algorithm.Variation.DIJKSTRA.getStringEquiv()) {
             return Algorithm.Variation.DIJKSTRA;
         } else {
-            return  Algorithm.Variation.BFS;
+            return Algorithm.Variation.BFS;
         }
     }
 
