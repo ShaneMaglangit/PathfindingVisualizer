@@ -26,6 +26,7 @@ public class PathfindingRun implements Runnable {
         }
     }
 
+
     private void showPath(List<List<Integer>> path) {
         for(List<Integer> node : path) {
             if(!isRunning) break;

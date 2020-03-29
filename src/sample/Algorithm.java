@@ -19,12 +19,13 @@ public final class Algorithm {
     }
 
     public static LinkedList<List<Integer>> depthFirstSearch(PathfindingRun pathfindingRun, Visualizer visualizer, List<List<Integer>> visited, List<Integer> current) {
+        LinkedList<List<Integer>> result = new LinkedList<>();
         int[] rowDir = {-1, 0, 1, 0};
         int[] colDir = {0, 1, 0, -1};
 
+        loop:
         for(int i = 0; i < 4; i++) {
             if(!pathfindingRun.isRunning()) break;
-            LinkedList<List<Integer>> result;
             List<Integer> next;
             int nextRow = current.get(0) + rowDir[i];
             int nextCol = current.get(1) + colDir[i];
@@ -41,9 +42,8 @@ public final class Algorithm {
 
             // If end found return
             if (next.equals(visualizer.getEnd())) {
-                result = new LinkedList<>();
                 result.add(current);
-                return result;
+                break loop;
             }
 
             // Set node as visit
@@ -54,13 +54,13 @@ public final class Algorithm {
             // Recurse
             result = depthFirstSearch(pathfindingRun, visualizer, visited, next);
 
-            if(result != null) {
+            if(!result.isEmpty()) {
                 if(!current.equals(visualizer.getStart())) result.add(0, current);
-                return result;
+                    break loop;
             }
         }
 
-        return null;
+        return result;
     }
 
     public static List<List<Integer>> breadthFirstSearch(PathfindingRun pathfindingRun, Visualizer visualizer) {
@@ -78,31 +78,23 @@ public final class Algorithm {
             List<Integer> current = queue.poll();
 
             // Add neighbors / children to queue
-            for (int i = 0; i < 4; i++) {
-                List<Integer> temp;
-                int nextRow = current.get(0) + rowDir[i];
-                int nextCol = current.get(1) + colDir[i];
-
-                // If exceeds then skip
-                if (nextRow < 0 || nextRow >= visualizer.ROW_COUNT) continue;
-                if (nextCol < 0 || nextCol >= visualizer.COL_COUNT) continue;
-
+            List<List<Integer>> neigbors = neighbors(current, visualizer.ROW_COUNT, visualizer.COL_COUNT);
+            for (List<Integer> neighbor : neigbors) {
                 // If visited or start then skip
-                if (visualizer.getNodes()[nextRow][nextCol].getState() == NodeState.BLOCKED) continue;
-                if (nextRow == start.get(0) && nextCol == start.get(1)) continue;
-                temp = List.of(nextRow, nextCol);
-                if (visited.contains(temp)) continue;
+                if (visualizer.getNodes()[neighbor.get(0)][neighbor.get(1)].getState() == NodeState.BLOCKED) continue;
+                if (neighbor.equals(visualizer.getStart())) continue;
+                if (visited.contains(neighbor)) continue;
 
                 prev.add(current);
-                visited.add(temp);
-                queue.add(temp);
+                visited.add(neighbor);
+                queue.add(neighbor);
 
                 // If end node is found, trace and return path.
-                if (temp.equals(visualizer.getEnd())) {
+                if (neighbor.equals(visualizer.getEnd())) {
                     return tracePath(visited, prev, start, end);
                 }
 
-                visualizer.getNodes()[temp.get(0)][temp.get(1)].changeState(NodeState.VISITED);
+                visualizer.getNodes()[neighbor.get(0)][neighbor.get(1)].changeState(NodeState.VISITED);
             }
             pathfindingRun.sleep(8L);
         }
@@ -147,7 +139,8 @@ public final class Algorithm {
             }
         }
 
-        return null;
+        // If end node is not found, return an empty path.
+        return new ArrayList<>();
     }
 
     public static List<List<Integer>> aStar(PathfindingRun pathfindingRun, Visualizer visualizer) {
@@ -191,17 +184,18 @@ public final class Algorithm {
             }
         }
 
-        return null;
+        // If end node is not found, return an empty path.
+        return new ArrayList<>();
     }
 
     public static int getHeuristicDistance(List<Integer> a, List<Integer> b) {
-        return ((int) Math.sqrt(Math.pow(b.get(0) - a.get(0), 2) + Math.pow(b.get(1) - a.get(1), 2))) * 10;
+        return ((int) Math.sqrt(Math.pow(b.get(0) - a.get(0), 2) + Math.pow(b.get(1) - a.get(1), 2))) * 4;
     }
 
     public static List<List<Integer>> neighbors(List<Integer> origin, int maxRow, int maxCol) {
         List<List<Integer>> neighbors = new ArrayList<>();
-        int[] rowDir = {1, 0, -1, 0};
-        int[] colDir = {0, -1, 0, 1};
+        int[] rowDir = {0, 0, 1, -1};
+        int[] colDir = {1, -1, 0, 0};
 
         for(int i = 0; i < 4; i++) {
             int nextRow = origin.get(0) + rowDir[i];

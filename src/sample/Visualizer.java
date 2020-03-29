@@ -4,6 +4,9 @@ import javafx.collections.FXCollections;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseDragEvent;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -64,15 +67,38 @@ public class Visualizer extends VBox {
     }
 
     public void createNodes() {
-        matrix.getChildren().clear();
         for (int row = 0; row < ROW_COUNT; row++) {
             for (int col = 0; col < COL_COUNT; col++) {
+                if(nodes[row][col] != null && nodes[row][col].getState().equals(NodeState.BLOCKED)) continue;
                 int finalRow = row;
                 int finalCol = col;
                 Node temp = new Node();
-                temp.setOnMouseClicked((event) -> {
-                    controller.setStartNode(this, List.of(finalRow, finalCol));
+
+                temp.addEventHandler(MouseEvent.DRAG_DETECTED, (event) -> {
+                    temp.startFullDrag();
+                    if(event.isPrimaryButtonDown()) {
+                        controller.setNodeAsBlocked(this, List.of(finalRow, finalCol));
+                    } else {
+                        temp.addWeight(1);
+                    }
                 });
+
+                temp.addEventHandler(MouseDragEvent.MOUSE_DRAG_ENTERED, (event) -> {
+                    if(event.isPrimaryButtonDown()) {
+                        controller.setNodeAsBlocked(this, List.of(finalRow, finalCol));
+                    } else {
+                        temp.addWeight(1);
+                    }
+                });
+
+                temp.setOnMouseClicked((event) -> {
+                    if(event.getButton() == MouseButton.PRIMARY) {
+                        controller.setStartNode(this, List.of(finalRow, finalCol));
+                    } else {
+                        controller.setEndNode(this, List.of(finalRow, finalCol));
+                    }
+                });
+
                 nodes[row][col] = temp;
                 matrix.add(temp, col, row);
             }
@@ -81,6 +107,20 @@ public class Visualizer extends VBox {
         // Set the start and end nodes
         nodes[start.get(0)][start.get(1)].changeState(NodeState.START);
         nodes[end.get(0)][end.get(1)].changeState(NodeState.END);
+    }
+
+    public Algorithm.Variation getAlgorithmVariation() {
+        String selectedValue = String.valueOf(cbxAlgo.getValue());
+
+        if(selectedValue == Algorithm.Variation.DFS.getStringEquiv()) {
+            return Algorithm.Variation.DFS;
+        } else if(selectedValue == Algorithm.Variation.ASTAR.getStringEquiv()) {
+            return Algorithm.Variation.ASTAR;
+        } else if(selectedValue == Algorithm.Variation.DIJKSTRA.getStringEquiv()) {
+            return Algorithm.Variation.DIJKSTRA;
+        } else {
+            return  Algorithm.Variation.BFS;
+        }
     }
 
     public Node[][] getNodes() {
@@ -105,19 +145,5 @@ public class Visualizer extends VBox {
 
     public PathfindingRun getPathfindingRun() {
         return pathfindingRun;
-    }
-
-    public Algorithm.Variation getAlgorithmVariation() {
-        String selectedValue = String.valueOf(cbxAlgo.getValue());
-
-        if(selectedValue == Algorithm.Variation.DFS.getStringEquiv()) {
-            return Algorithm.Variation.DFS;
-        } else if(selectedValue == Algorithm.Variation.ASTAR.getStringEquiv()) {
-            return Algorithm.Variation.ASTAR;
-        } else if(selectedValue == Algorithm.Variation.DIJKSTRA.getStringEquiv()) {
-            return Algorithm.Variation.DIJKSTRA;
-        } else {
-            return  Algorithm.Variation.BFS;
-        }
     }
 }
