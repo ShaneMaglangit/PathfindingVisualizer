@@ -189,7 +189,7 @@ public final class Algorithm {
     }
 
     public static int getHeuristicDistance(List<Integer> a, List<Integer> b) {
-        return ((int) Math.sqrt(Math.pow(b.get(0) - a.get(0), 2) + Math.pow(b.get(1) - a.get(1), 2))) * 2;
+        return ((int) Math.sqrt(Math.pow(b.get(0) - a.get(0), 2) + Math.pow(b.get(1) - a.get(1), 2))) * 4;
     }
 
     public static List<List<Integer>> neighbors(List<Integer> origin, int maxRow, int maxCol) {

@@ -1,9 +1,11 @@
 package sample;
 
 import javafx.collections.FXCollections;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseDragEvent;
 import javafx.scene.input.MouseEvent;
@@ -22,7 +24,13 @@ public class Visualizer extends VBox {
     private List<Integer> end;
     private PathfindingRun pathfindingRun;
     private HBox hbxMenu;
+    private HBox hbxInstructions;
     private GridPane matrix;
+    private GridPane gridInstructions;
+    private Label lblStart;
+    private Label lblEnd;
+    private Label lblBlock;
+    private Label lblWeight;
     private ComboBox cbxAlgo;
     private Button btnVisualize;
     private Button btnClear;
@@ -31,6 +39,7 @@ public class Visualizer extends VBox {
         this.controller = controller;
         this.nodes = new Node[ROW_COUNT][COL_COUNT];
         this.hbxMenu = new HBox();
+        this.hbxInstructions = new HBox();
         this.matrix = new GridPane();
 
         // Create the menu
@@ -39,6 +48,16 @@ public class Visualizer extends VBox {
         this.cbxAlgo = new ComboBox();
         this.btnVisualize = new Button("Visualize");
         this.btnClear = new Button("Clear board");
+        hbxMenu.setPadding(new Insets(10));
+
+        // Create instructions
+        this.lblStart = new Label("LMB | Set start");
+        this.lblEnd = new Label("RMB | Set end");
+        this.lblBlock = new Label("LMB + DRAG | Add wall");
+        this.lblWeight = new Label("RMB + DRAG | Add weight");
+        hbxInstructions.setPadding(new Insets(10));
+        hbxInstructions.setSpacing(50);
+        hbxInstructions.setAlignment(Pos.CENTER);
 
         // Add the items to the cbx
         btnVisualize.setOnMouseClicked((event) -> controller.visualize(this, pathfindingRun));
@@ -63,7 +82,8 @@ public class Visualizer extends VBox {
 
         // Add the child controls
         hbxMenu.getChildren().addAll(cbxAlgo, btnVisualize, btnClear);
-        this.getChildren().addAll(hbxMenu, matrix);
+        hbxInstructions.getChildren().addAll(lblStart, lblEnd, lblBlock, lblWeight);
+        this.getChildren().addAll(hbxMenu, hbxInstructions, matrix);
 
         // Add stylesheet
         getStylesheets().add(getClass().getResource("style.css").toExternalForm());
